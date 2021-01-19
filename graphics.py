@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import numpy as np
 from PIL import Image
 import time
@@ -7,13 +9,13 @@ import threading
 def save_image(x, path):
     im = Image.fromarray(x)
     im.save(path, optimize=True)
-    return
 
 # Assumes [NCHW] format
 def save_raster(x, path, rescale=False, width=None):
-    t = threading.Thread(target=_save_raster, args=(x, path, rescale, width))
+    t = threading.Thread(target=save_raster, args=(x, path, rescale, width))
     t.start()
 
+    return
 
 def _save_raster(x, path, rescale, width):
     x = to_raster(x, rescale, width)
