@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Modified Horovod MNIST example
 
@@ -8,11 +8,11 @@ import time
 
 import horovod.tensorflow as hvd
 import numpy as np
-import tensorflow as tf
-import graphics
+import tensorflow as tf 
+import graphics 
 from utils import ResultLogger
 
-learn = tf.contrib.learn
+#learn = tf.contrib.learn
 
 # Surpress verbose warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -43,10 +43,7 @@ def init_visualizations(hps, model, logdir):
         y = np.asarray([_y % hps.n_y for _y in (
             list(range(cols)) * rows)], dtype='int32')
 
-        # temperatures = [0., .25, .5, .626, .75, .875, 1.] #previously
-        temperatures = [0., .25, .5, .6, .7, .8, .9, 1.]
-
-        x_samples = []
+        # temperatures = [0., .25, .5, .626, .75, .875, 1.] #previously temperatures = [0., .25, .5, .6, .7, .8, .9, 1.] x_samples = []
         x_samples.append(sample_batch(y, [.0]*n_batch))
         x_samples.append(sample_batch(y, [.25]*n_batch))
         x_samples.append(sample_batch(y, [.5]*n_batch))
@@ -139,7 +136,9 @@ def main(hps):
     sess = tensorflow_session()
 
     # Download and load dataset.
-    tf.set_random_seed(hvd.rank() + hvd.size() * hps.seed)
+    print(hvd.rank() + hvd.size() * hps.seed)
+
+    tf.compat.v1.set_random_seed(hvd.rank() + hvd.size() * hps.seed)
     np.random.seed(hvd.rank() + hvd.size() * hps.seed)
 
     # Get data and set train_its and valid_its
@@ -308,11 +307,11 @@ Create tensorflow session with horovod
 '''
 def tensorflow_session():
     # Init session and params
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
     # Pin GPU to local rank (one GPU per process)
     config.gpu_options.visible_device_list = str(hvd.local_rank())
-    sess = tf.Session(config=config)
+    sess = tf.compat.v1.Session(config=config)
     return sess
 
 
