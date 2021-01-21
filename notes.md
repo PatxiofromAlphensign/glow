@@ -1,8 +1,8 @@
 ## TODO 
 
-- make `train.py` run! [x]
+- make `train.py` run! :heavy_check_mark:
 
-- tensorflow as how it can accept  `tensorflow.contrib` []
+- tensorflow as how it can accept  `tensorflow.contrib` :x:
 
-- run tests on networks []
+- run tests on networks :x:
 
