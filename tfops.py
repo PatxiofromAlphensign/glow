@@ -1,12 +1,14 @@
 import tensorflow as tf
-from tensorflow.contrib.framework.python.ops import add_arg_scope, arg_scope
-from tensorflow.contrib.layers import variance_scaling_initializer
+#from tensorflow.compat.v1.contrib.framework.python.ops import add_arg_scope, arg_scope
+from tensorflow.compat.v1 import variance_scaling_initializer
 import numpy as np
 import horovod.tensorflow as hvd
 
 # Debugging function
 do_print_act_stats = True
 
+def add_arg_scope(f):
+    raise NotImplementedError("%s" % f)
 
 def print_act_stats(x, _str=""):
     if not do_print_act_stats:

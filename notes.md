@@ -6,5 +6,3 @@
 
 - run tests on networks :x:
 
-- test
-
