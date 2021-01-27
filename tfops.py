@@ -7,8 +7,10 @@ import horovod.tensorflow as hvd
 # Debugging function
 do_print_act_stats = True
 
-def add_arg_scope(f):
-    raise NotImplementedError("%s" % f)
+if "add_arg_scope" not in globals():
+    def add_arg_scope(f):
+        return f
+        raise NotImplementedError("%s" % f)
 
 def print_act_stats(x, _str=""):
     if not do_print_act_stats:

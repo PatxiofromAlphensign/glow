@@ -8,7 +8,7 @@ def img_mat(path):
         data = p.getdata()
         return np.uint8(data)
 
-def refactors(x):
+def refactors(x): # refactor in terms of a single last dimention
 
     if math.prod(x.shape) % 2 == 0:
         x1,x2 = x.shape
@@ -68,9 +68,7 @@ if __name__ == "__main__":
     def main():
         img = factor_img(img_mat("pepe.jpg"))
         img = np.uint8(img)
-        print(img[:,:,1].shape)
-        graphics.save_image(img, "p.jpg")    # gotta use the multiple saver
-
+        graphics.save_image(img.T[:,:,:3], "p.jpg")    # gotta use the multiple saver
 
 
     main()
