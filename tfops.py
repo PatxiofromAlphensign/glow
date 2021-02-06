@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow.compat.v1 import variance_scaling_initializer
 import numpy as np
 import horovod.tensorflow as hvd
+from arg_scope import arg_scope
 
 # Debugging function
 do_print_act_stats = True
@@ -51,7 +52,7 @@ def default_initializer(std=0.05):
 
 def int_shape(x):
     if str(x.get_shape()[0]) != '?':
-        return list(map(int, x.get_shape()))
+        return list(map(int, [0] + x.get_shape()[1:])) 
     return [-1]+list(map(int, x.get_shape()[1:]))
 
 # wrapper tf.get_variable, augmented with 'init' functionality

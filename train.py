@@ -128,7 +128,8 @@ def process_results(results):
 
 
 def main(hps):
-
+    
+    tf.compat.v1.disable_eager_execution()
     # Initialize Horovod.
     hvd.init()
 
@@ -151,12 +152,13 @@ def main(hps):
         os.mkdir(logdir)
 
     # Create model
-    import model
-    model = model.model(sess, hps, train_iterator, test_iterator, data_init)
+    import model2 
+    model = model2.model(sess, hps, train_iterator, test_iterator, data_init)
 
     # Initialize visualization functions
     visualise = init_visualizations(hps, model, logdir)
 
+    return model
     if not hps.inference:
         # Perform training
         train(sess, model, hps, logdir, visualise)
