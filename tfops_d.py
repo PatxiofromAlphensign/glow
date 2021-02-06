@@ -27,9 +27,7 @@ def namescope(name, count=None):
                 tensors[i] = (tf.Variable(ranges[i],"%s%d" % (name, i)))
                 tensors["%d1" % i] = get_variable("%s%d" % (name, i), ranges[i])
             
-            return tensors
-            
-namescope
+            return tensors         
 #ops()
 
 

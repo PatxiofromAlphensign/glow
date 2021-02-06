@@ -4,9 +4,10 @@ import tfops as Z
 import optim
 import numpy as np
 import horovod.tensorflow as hvd
-from tensorflow.contrib.framework.python.ops import add_arg_scope
+#from tensorflow.contrib.framework.python.ops import add_arg_scope
 
-
+def add_arg_scope(f):
+    return f
 '''
 f_loss: function with as input the (x,y,reuse=False), and as output a list/tuple whose first element is the loss.
 '''
@@ -142,10 +143,10 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
 
     # Only for decoding/init, rest use iterators directly
     with tf.name_scope('input'):
-        X = tf.placeholder(
+        X = tf.compat.v1.placeholder(
             tf.uint8, [None, hps.image_size, hps.image_size, 3], name='image')
-        Y = tf.placeholder(tf.int32, [None], name='label')
-        lr = tf.placeholder(tf.float32, None, name='learning_rate')
+        Y = tf.compat.v1.placeholder(tf.int32, [None], name='label')
+        lr = tf.compat.v1.placeholder(tf.float32, None, name='learning_rate')
 
     encoder, decoder = codec(hps)
     hps.n_bins = 2. ** hps.n_bits_x
@@ -162,7 +163,7 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
 
     def _f_loss(x, y, is_training, reuse=False):
 
-        with tf.variable_scope('model', reuse=reuse):
+        with tf.compat.v1.variable_scope('model', reuse=reuse):
             y_onehot = tf.cast(tf.one_hot(y, hps.n_y, 1, 0), 'float32')
 
             # Discrete -> Continuous
@@ -224,7 +225,7 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
 
     # === Sampling function
     def f_sample(y, eps_std):
-        with tf.variable_scope('model', reuse=True):
+        with tf.compat.v1.variable_scope('model', reuse=True):
             y_onehot = tf.cast(tf.one_hot(y, hps.n_y, 1, 0), 'float32')
 
             _, sample, _ = prior("prior", y_onehot, hps)
@@ -235,7 +236,7 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
 
         return x
 
-    m.eps_std = tf.placeholder(tf.float32, [None], name='eps_std')
+    m.eps_std = tf.compat.v1.placeholder(tf.float32, [None], name='eps_std')
     x_sampled = f_sample(Y, m.eps_std)
 
     def sample(_y, _eps_std):
@@ -245,7 +246,7 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
     if hps.inference:
         # === Encoder-Decoder functions
         def f_encode(x, y, reuse=True):
-            with tf.variable_scope('model', reuse=reuse):
+            with tf.compat.v1.variable_scope('model', reuse=reuse):
                 y_onehot = tf.cast(tf.one_hot(y, hps.n_y, 1, 0), 'float32')
 
                 # Discrete -> Continuous
@@ -267,7 +268,7 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
             return eps
 
         def f_decode(y, eps, reuse=True):
-            with tf.variable_scope('model', reuse=reuse):
+            with tf.compat.v1.variable_scope('model', reuse=reuse):
                 y_onehot = tf.cast(tf.one_hot(y, hps.n_y, 1, 0), 'float32')
 
                 _, sample, _ = prior("prior", y_onehot, hps)
@@ -283,7 +284,7 @@ def model(sess, hps, train_iterator, test_iterator, data_init):
         print(enc_eps)
         for i, _eps in enumerate(enc_eps):
             print(_eps)
-            dec_eps.append(tf.placeholder(tf.float32, _eps.get_shape().as_list(), name="dec_eps_" + str(i)))
+            dec_eps.append(tf.compat.v1.placeholder(tf.float32, _eps.get_shape().as_list(), name="dec_eps_" + str(i)))
         dec_x = f_decode(Y, dec_eps)
 
         eps_shapes = [_eps.get_shape().as_list()[1:] for _eps in enc_eps]
@@ -331,7 +332,7 @@ def checkpoint(z, logdet):
 
 @add_arg_scope
 def revnet2d(name, z, logdet, hps, reverse=False):
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
         if not reverse:
             for i in range(hps.depth):
                 z, logdet = checkpoint(z, logdet)
@@ -345,7 +346,7 @@ def revnet2d(name, z, logdet, hps, reverse=False):
 # Simpler, new version
 @add_arg_scope
 def revnet2d_step(name, z, logdet, hps, reverse):
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
 
         shape = Z.int_shape(z)
         n_z = shape[3]
@@ -419,7 +420,7 @@ def revnet2d_step(name, z, logdet, hps, reverse):
 
 def f(name, h, width, n_out=None):
     n_out = n_out or int(h.get_shape()[3])
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
         h = tf.nn.relu(Z.conv2d("l_1", h, width))
         h = tf.nn.relu(Z.conv2d("l_2", h, width, filter_size=[1, 1]))
         h = Z.conv2d_zeros("l_last", h, n_out)
@@ -428,7 +429,7 @@ def f(name, h, width, n_out=None):
 
 def f_resnet(name, h, width, n_out=None):
     n_out = n_out or int(h.get_shape()[3])
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
         h = tf.nn.relu(Z.conv2d("l_1", h, width))
         h = Z.conv2d_zeros("l_2", h, n_out)
     return h
@@ -439,7 +440,7 @@ def invertible_1x1_conv(name, z, logdet, reverse=False):
 
     if True:  # Set to "False" to use the LU-decomposed version
 
-        with tf.variable_scope(name):
+        with tf.compat.v1.variable_scope(name):
 
             shape = Z.int_shape(z)
             w_shape = [shape[3], shape[3]]
@@ -476,7 +477,7 @@ def invertible_1x1_conv(name, z, logdet, reverse=False):
 
         # LU-decomposed version
         shape = Z.int_shape(z)
-        with tf.variable_scope(name):
+        with tf.compat.v1.variable_scope(name):
 
             dtype = 'float64'
 

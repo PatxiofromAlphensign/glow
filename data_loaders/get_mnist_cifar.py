@@ -1,5 +1,5 @@
 import numpy as np
-
+from keras.datasets import cifar10
 
 def downsample(x, resolution):
     assert x.dtype == np.float32
