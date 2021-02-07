@@ -30,6 +30,7 @@ def abstract_model_xy(sess, hps, feeds, train_iterator, test_iterator, data_init
     # === Loss and optimizer
     loss_train, stats_train = f_loss(train_iterator, True)
     all_params = tf.compat.v1.trainable_variables()
+    hps.gradient_checkpointing = 0
     if hps.gradient_checkpointing == 1:
         from memory_saving_gradients import gradients
         gs = gradients(loss_train, all_params)

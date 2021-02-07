@@ -126,15 +126,19 @@ def process_results(results):
         res_dict[stats[i]] = "{:.4f}".format(results[i])
     return res_dict
 
+def makeitsAndCombine(hps, train_iter, test_iter):
+    its = len(train_iter())*(1 + len(test_iter())/hps.full_test_its)
+    print(its, len(train_iter()))
+    for it in range(int(its)):
+        for testit in range(hps.test_its):
+            test_i = test_iter()[it]
+            stripped_train_iter = train_iter()[it][:test_iter()[it].shape[0]]
+            comb = test_i + stripped_train_iter 
+    return
 
-def main(hps):
+def setup_model(hps, sess):
     
-    tf.compat.v1.disable_eager_execution()
-    # Initialize Horovod.
-    hvd.init()
-
     # Create tensorflow session
-    sess = tensorflow_session()
 
     # Download and load dataset.
     print(hvd.rank() + hvd.size() * hps.seed)
@@ -147,25 +151,35 @@ def main(hps):
     hps.train_its, hps.test_its, hps.full_test_its = get_its(hps)
 
     # Create log dir
+        # Create model
+    import model2 
+    model = model2.model(sess, hps, train_iterator, test_iterator, data_init)
+
+    return model
+    # Initialize visualization functions
+    visualise = init_visualizations(hps, model, logdir)
+
+
+def utilze(sess,ps, model,logdir):
+    if not hps.inference:
+        # Perform training
+        train(sess, model, hps, logdir, visualise=False)
+    else:
+        infer(sess, model, hps, test_iterator)
+
+def main(hps):
+    tf.compat.v1.disable_eager_execution()
+    # Initialize Horovod.
+    hvd.init()
+    sess = tensorflow_session()
     logdir = os.path.abspath(hps.logdir) + "/"
     if not os.path.exists(logdir):
         os.mkdir(logdir)
 
-    # Create model
-    import model2 
-    model = model2.model(sess, hps, train_iterator, test_iterator, data_init)
+    model = setup_model(hps, sess)
+    utilze(sess, hps, model, logdir)
 
-    # Initialize visualization functions
-    visualise = init_visualizations(hps, model, logdir)
-
-    return model
-    if not hps.inference:
-        # Perform training
-        train(sess, model, hps, logdir, visualise)
-    else:
-        infer(sess, model, hps, test_iterator)
-
-
+    
 def infer(sess, model, hps, iterator):
     # Example of using model in inference mode. Load saved model using hps.restore_path
     # Can provide x, y from files instead of dataset iterator
@@ -272,7 +286,8 @@ def train(sess, model, hps, logdir, visualise):
             # Sample
             t = time.time()
             if epoch == 1 or epoch == 10 or epoch % hps.epochs_full_sample == 0:
-                visualise(epoch)
+                if visualise:
+                    visualise(epoch)
             dsample = time.time() - t
 
             if hvd.rank() == 0:
@@ -318,7 +333,6 @@ def tensorflow_session():
 
 
 if __name__ == "__main__":
-
     # This enables a ctr-C without triggering errors
     import signal
     signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
